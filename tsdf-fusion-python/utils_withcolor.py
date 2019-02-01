@@ -157,8 +157,8 @@ def main():
     parser.add_argument("--cam", dest='cam_K_file',default='data1/camera-intrinsics.txt')
     parser.add_argument("--out_pts",  dest='output_pts',default= 'tsdf.ply')
     parser.add_argument("--out_bin", dest='output_bin',default='tsdf.bin')
-    parser.add_argument("--first_frame", dest='first_frame_idx', type=int, default=150)
-    parser.add_argument("--base_frame", dest='base_frame_idx', type=int, default=150)
+    parser.add_argument("--first_frame", dest='first_frame_idx', type=int, default=0)
+    parser.add_argument("--base_frame", dest='base_frame_idx', type=int, default=0)
     parser.add_argument("--num_frames", dest='num_frames',type=int, default=2)
     parser.add_argument("--npy",action='store_true',default=False)
 
@@ -173,6 +173,7 @@ def main():
     base_frame_idx = args.base_frame_idx
     num_frames = args.num_frames
     npy = args.npy
+    print('base frame', base_frame_idx)
     #data_path = "data1/rgbd-frames"
     ''' chess dataset '''
     #data_path = "/home/daryl/datasets/chess/seq-01"
@@ -189,11 +190,16 @@ def main():
     voxel_grid_origin_y = -1.5
     voxel_grid_origin_z = -0.5
     voxel_size = 0.006
+    voxel_size = 0.03
+    # voxel_size = 0.12
 
     trunc_margin = voxel_size * 5
-    voxel_grid_dim_x = 500
-    voxel_grid_dim_y = 500
-    voxel_grid_dim_z = 500
+    # voxel_grid_dim_x = 500
+    # voxel_grid_dim_y = 500
+    # voxel_grid_dim_z = 500
+    voxel_grid_dim_x = 600
+    voxel_grid_dim_y = 600
+    voxel_grid_dim_z = 600
 
 
     # voxel_size = 0.006
@@ -273,15 +279,16 @@ def main():
         if npy:
             depth_im_file = data_path +'/frame-' + curr_frame_prefix + '.depth.npy'
             depth_im = np.load(depth_im_file)
+            print(depth_im_file)
         else:
             depth_im_file = data_path +'/frame-' + curr_frame_prefix + '.depth.png'
             depth_im = cv2.imread(depth_im_file,cv2.IMREAD_UNCHANGED)
         # print('max and min depth', np.max(depth_im))
         print('max and min depth', np.max(depth_im), np.min(depth_im))
         # depth_norm = depth_im/1000.0
-        depth_norm = depth_im/10.0
-        mask_depth = depth_norm>6.0
-        depth_norm[mask_depth]= 6.0
+        depth_norm = depth_im/1.0
+        mask_depth = depth_norm>10.0
+        depth_norm[mask_depth]= 10.0
         depth_norm_flat = depth_norm.flatten().astype(np.float32)
         #print(type(depth_im))
         #print(depth_norm_flat.dtype)
@@ -304,9 +311,10 @@ def main():
         cam2world_file = data_path+'/frame-' + curr_frame_prefix + '.pose.txt'
         cam2world = LoadMatrixFromFile(cam2world_file)
         cam2world_np = np.array(cam2world, dtype='float32').reshape(4,4)
-
+        print('cam2world', cam2world_np)
         '''Compute relative camera pose (camera-to-base frame)'''
         cam2base = np.dot(base2world_inv,cam2world_np)
+        print('cam2base', cam2base)
         cam2base_flat = cam2base.flatten()
         cuda.memcpy_htod(gpu_cam2base,cam2base_flat)
         cuda.memcpy_htod(gpu_depth_im,depth_norm_flat)
@@ -345,32 +353,32 @@ def main():
     print("Depth fusion finished. Point cloud saved in 'tsdf.ply'")
 
     '''Saving TSDF voxel grid values to disk (tsdf.bin)...'''
-    print('Saving TSDF voxel grid values to disk (tsdf.bin)...')
-
-    with open(output_bin, 'wb') as f:
-        '''
-        f.write(float(voxel_grid_dim_x))
-        f.write(float(voxel_grid_dim_y))
-        f.write(float(voxel_grid_dim_z))
-        f.write(float(voxel_grid_origin_x))
-        f.write(float(voxel_grid_origin_y))
-        f.write(float(voxel_grid_origin_z))
-        f.write(float(voxel_size))
-        f.write(float(trunc_margin))
-        for i in range(voxel_grid_TSDF.shape[0]):
-            f.write(float(voxel_grid_TSDF[i]))
-        '''
-        np.float32(voxel_grid_dim_x).tofile(f)
-        np.float32(voxel_grid_dim_y).tofile(f)
-        np.float32(voxel_grid_dim_z).tofile(f)
-        np.float32(voxel_grid_origin_x).tofile(f)
-        np.float32(voxel_grid_origin_y).tofile(f)
-        np.float32(voxel_grid_origin_z).tofile(f)
-        np.float32(voxel_size).tofile(f)
-        np.float32(trunc_margin).tofile(f)
-        #for i in range(voxel_grid_TSDF.shape[0]):
-            #f.write(float(voxel_grid_TSDF[i]))
-        voxel_grid_TSDF.tofile(f)
+    # print('Saving TSDF voxel grid values to disk (tsdf.bin)...')
+    #
+    # with open(output_bin, 'wb') as f:
+    #     '''
+    #     f.write(float(voxel_grid_dim_x))
+    #     f.write(float(voxel_grid_dim_y))
+    #     f.write(float(voxel_grid_dim_z))
+    #     f.write(float(voxel_grid_origin_x))
+    #     f.write(float(voxel_grid_origin_y))
+    #     f.write(float(voxel_grid_origin_z))
+    #     f.write(float(voxel_size))
+    #     f.write(float(trunc_margin))
+    #     for i in range(voxel_grid_TSDF.shape[0]):
+    #         f.write(float(voxel_grid_TSDF[i]))
+    #     '''
+    #     np.float32(voxel_grid_dim_x).tofile(f)
+    #     np.float32(voxel_grid_dim_y).tofile(f)
+    #     np.float32(voxel_grid_dim_z).tofile(f)
+    #     np.float32(voxel_grid_origin_x).tofile(f)
+    #     np.float32(voxel_grid_origin_y).tofile(f)
+    #     np.float32(voxel_grid_origin_z).tofile(f)
+    #     np.float32(voxel_size).tofile(f)
+    #     np.float32(trunc_margin).tofile(f)
+    #     #for i in range(voxel_grid_TSDF.shape[0]):
+    #         #f.write(float(voxel_grid_TSDF[i]))
+    #     voxel_grid_TSDF.tofile(f)
 
 if __name__ == '__main__':
     main()

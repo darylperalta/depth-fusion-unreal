@@ -37,26 +37,28 @@ def write_pose(x, y, z, roll, pitch, yaw, num=2, filename='pose.txt'):
     f.close()
 
 def eulerAnglesToRotationMatrix(theta):
+    print('theta 0 ', theta[0], theta[1], theta[2])
 
-    R_x = np.array([[1,         0,                  0                   ],
-                    [0,         math.cos(theta[0]), -math.sin(theta[0]) ],
-                    [0,         math.sin(theta[0]), math.cos(theta[0])  ]
+    R_x = np.array([[1.,         0.,                  0.                   ],
+                    [0.,         math.cos(theta[0]), -math.sin(theta[0]) ],
+                    [0.,         math.sin(theta[0]), math.cos(theta[0])  ]
                     ])
 
 
 
-    R_y = np.array([[math.cos(theta[1]),    0,      math.sin(theta[1])  ],
-                    [0,                     1,      0                   ],
-                    [-math.sin(theta[1]),   0,      math.cos(theta[1])  ]
+    R_y = np.array([[math.cos(theta[1]),    0.,      math.sin(theta[1])  ],
+                    [0.,                     1.,      0.                   ],
+                    [-math.sin(theta[1]),   0.,      math.cos(theta[1])  ]
                     ])
 
-    R_z = np.array([[math.cos(theta[2]),    -math.sin(theta[2]),    0],
-                    [math.sin(theta[2]),    math.cos(theta[2]),     0],
-                    [0,                     0,                      1]
+    R_z = np.array([[math.cos(theta[2]),    -math.sin(theta[2]),    0.],
+                    [math.sin(theta[2]),    math.cos(theta[2]),     0.],
+                    [0.,                     0.,                      1.]
                     ])
 
 
-    R = np.dot(R_z, np.dot( R_y, R_x ))
+    # R = np.dot(R_z, np.dot( R_y, R_x ))
+    R = np.matmul(np.matmul( R_z, R_y ), R_x)
 
     return R
 
@@ -67,7 +69,7 @@ def DepthConversion(PointDepth, f):
     j_c = np.float(W) / 2 - 1
     columns, rows = np.meshgrid(np.linspace(0, W-1, num=W), np.linspace(0, H-1, num=H))
     DistanceFromCenter = ((rows - i_c)**2 + (columns - j_c)**2)**(0.5)
-    PlaneDepth = (PointDepth-1) / (1 + (DistanceFromCenter / f)**2)**(0.5)
+    # PlaneDepth = (PointDepth-1) / (1 + (DistanceFromCenter / f)**2)**(0.5)
     PlaneDepth = (PointDepth) / (1 + (DistanceFromCenter / f)**2)**(0.5)
     return PlaneDepth
 
@@ -84,7 +86,8 @@ print(res)
 
 '''Load a camera trajectory '''
 # traj_file = './camera_traj2.json' # Relative to this python script
-traj_file = './camera_traj36.json' # Relative to this python script
+# traj_file = './camera_traj36.json' # Relative to this python script
+traj_file = './camera_trans2.json' # Relative to this python script
 import json
 camera_trajectory = json.load(open(traj_file))
 # We will show how to record a camera trajectory in another tutorial
@@ -96,7 +99,9 @@ print(len(camera_trajectory))
 idx = 0
 # while True:
 # for idx in range(len(camera_trajectory)):
-num_images = 18
+# num_images = 18
+# num_images = 18
+num_images = 2
 # x = []
 # y = []
 # z = []
@@ -114,18 +119,31 @@ for idx in range(num_images):
     # roll.append(rot['roll'])
     # pitch.append(rot['pitch'])
     # yaw.append(rot['yaw'])
-    rot_mat = eulerAnglesToRotationMatrix([rot['roll'],rot['pitch'],rot['yaw']])
+    # rot['yaw'] = rot['yaw'] -360
+    rot_mat = eulerAnglesToRotationMatrix([math.radians(rot['roll']),math.radians(rot['pitch']),-1*math.radians(rot['yaw'])])
+    # rot_mat = np.linalg.inv(rot_mat)
     # trans_1 = np.array(loc['x'],loc['y'],loc['z'])
     trans = np.zeros((3,1))
+
+    # loc['y'] = -1 * loc['y']
+    print('loc',loc['x'],loc['y'],loc['z'] )
     trans[:,0] = np.transpose(np.array((loc['x'],loc['y'],loc['z'])))
+    trans[:,0] = np.transpose(np.array((loc['y'],loc['z'],loc['x'])))
+    print('rotation')
+    print(rot['roll'])
+    print(rot['pitch'])
+    print(rot['yaw'])
     print(rot_mat)
     print(rot_mat.shape)
     print(trans)
+    trans = trans/100 # 1/1 meters
     print(trans.shape)
     pose = np.hstack((rot_mat,trans))
     last_row = np.zeros((1,4))
     last_row[:,3] = 1
     pose = np.vstack((pose,last_row))
+    # pose = np.linalg.inv(pose)
+    print('pose')
     print(pose)
     # np.savetxt('pose_out.txt', pose)
     pose_filename = '/home/daryl/depth-fusion-unreal/tsdf-fusion-python/data_house/rgbd-frames/frame-{:06}.pose.txt'.format(idx)
@@ -152,6 +170,7 @@ for idx in range(num_images):
     print('type ', type(res_depth2))
     depth_pt = read_npy(res_depth2)
     depth = DepthConversion(depth_pt, 320)
+    # depth = depth_pt
     print('max and min depth', np.max(depth), np.min(depth))
     print(depth.shape)
     depth_np_filename = '/home/daryl/depth-fusion-unreal/tsdf-fusion-python/data_house/rgbd-frames/frame-{:06}.depth.npy'.format(idx)
