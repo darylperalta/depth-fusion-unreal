@@ -87,7 +87,7 @@ print(res)
 '''Load a camera trajectory '''
 # traj_file = './camera_traj2.json' # Relative to this python script
 # traj_file = './camera_traj36.json' # Relative to this python script
-traj_file = './camera_trans2.json' # Relative to this python script
+traj_file = './camera_trans4.json' # Relative to this python script
 import json
 camera_trajectory = json.load(open(traj_file))
 # We will show how to record a camera trajectory in another tutorial
@@ -101,7 +101,7 @@ idx = 0
 # for idx in range(len(camera_trajectory)):
 # num_images = 18
 # num_images = 18
-num_images = 2
+num_images = 4
 # x = []
 # y = []
 # z = []
@@ -120,7 +120,10 @@ for idx in range(num_images):
     # pitch.append(rot['pitch'])
     # yaw.append(rot['yaw'])
     # rot['yaw'] = rot['yaw'] -360
-    rot_mat = eulerAnglesToRotationMatrix([math.radians(rot['roll']),math.radians(rot['pitch']),-1*math.radians(rot['yaw'])])
+    # rot_mat = eulerAnglesToRotationMatrix([math.radians(rot['roll']),math.radians(rot['pitch']),math.radians(rot['yaw'])])
+    rot_mat = eulerAnglesToRotationMatrix([math.radians(rot['pitch']),math.radians(rot['roll']),math.radians(rot['yaw'])]) # worked on pure elevation trans3
+    # rot_mat = eulerAnglesToRotationMatrix([math.radians(rot['pitch']),math.radians(rot['yaw']),math.radians(rot['roll'])])
+    # rot_mat = eulerAnglesToRotationMatrix([math.radians(rot['pitch']),math.radians(rot['roll']),math.radians(rot['yaw'])])
     # rot_mat = np.linalg.inv(rot_mat)
     # trans_1 = np.array(loc['x'],loc['y'],loc['z'])
     trans = np.zeros((3,1))
@@ -129,6 +132,8 @@ for idx in range(num_images):
     print('loc',loc['x'],loc['y'],loc['z'] )
     trans[:,0] = np.transpose(np.array((loc['x'],loc['y'],loc['z'])))
     trans[:,0] = np.transpose(np.array((loc['y'],loc['z'],loc['x'])))
+    # trans[:,0] = np.transpose(np.array((loc['y'],loc['x'],loc['z'])))
+
     print('rotation')
     print(rot['roll'])
     print(rot['pitch'])
