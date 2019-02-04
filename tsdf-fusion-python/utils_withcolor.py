@@ -190,7 +190,7 @@ def main():
     voxel_grid_origin_y = -1.5
     voxel_grid_origin_z = -0.5
     voxel_size = 0.006
-    voxel_size = 0.03
+    # voxel_size = 0.03
     # voxel_size = 0.12
 
     trunc_margin = voxel_size * 5
@@ -287,8 +287,8 @@ def main():
         print('max and min depth', np.max(depth_im), np.min(depth_im))
         # depth_norm = depth_im/1000.0
         depth_norm = depth_im/1.0
-        mask_depth = depth_norm>10.0
-        depth_norm[mask_depth]= 10.0
+        mask_depth = depth_norm>4.0
+        depth_norm[mask_depth]= 4.0
         depth_norm_flat = depth_norm.flatten().astype(np.float32)
         #print(type(depth_im))
         #print(depth_norm_flat.dtype)

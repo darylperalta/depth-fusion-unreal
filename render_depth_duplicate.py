@@ -86,9 +86,11 @@ print(res)
 
 '''Load a camera trajectory '''
 # traj_file = './camera_traj2.json' # Relative to this python script
-# traj_file = './camera_traj36.json' # Relative to this python script
+traj_file = './camera_traj36.json' # Relative to this python script
 # traj_file = './camera_yaw.json' # Relative to this python script
-traj_file = './camera_trans4.json' # Relative to this python script
+# traj_file = './camera_trans4.json' # Relative to this python script
+traj_file = './camera_traj36_close.json' # Relative to this python script
+# traj_file = './camera_trans5_close.json' # Relative to this python script
 import json
 camera_trajectory = json.load(open(traj_file))
 # We will show how to record a camera trajectory in another tutorial
@@ -102,7 +104,7 @@ idx = 0
 # for idx in range(len(camera_trajectory)):
 # num_images = 18
 # num_images = 18
-num_images = 5
+num_images = 36
 # x = []
 # y = []
 # z = []
@@ -121,8 +123,9 @@ for idx in range(num_images):
     # pitch.append(rot['pitch'])
     # yaw.append(rot['yaw'])
     # rot['yaw'] = rot['yaw'] -360
-    if rot['yaw'] >180:
-        rot['yaw'] =rot['yaw']-360
+    # if rot['yaw'] >180:
+        # rot['yaw'] = rot['yaw']
+        # rot['yaw'] =rot['yaw']-360
     # rot_mat = eulerAnglesToRotationMatrix([math.radians(rot['roll']),math.radians(rot['pitch']),math.radians(rot['yaw'])])
     rot_mat = eulerAnglesToRotationMatrix([math.radians(rot['pitch']),math.radians(rot['yaw']),math.radians(rot['roll'])]) # worked on pure elevation trans3
     # rot_mat = eulerAnglesToRotationMatrix([math.radians(rot['roll']),math.radians(rot['yaw']),math.radians(rot['pitch'])])
@@ -134,7 +137,7 @@ for idx in range(num_images):
     # loc['y'] = -1 * loc['y']
     print('loc',loc['x'],loc['y'],loc['z'] )
     # trans[:,0] = np.transpose(np.array((loc['x'],loc['y'],loc['z'])))
-    trans[:,0] = np.transpose(np.array((-1*loc['y'],loc['z'],loc['x'])))
+    trans[:,0] = np.transpose(np.array((-1*loc['y'],loc['z'],-1*loc['x'])))
     # trans[:,0] = np.transpose(np.array((loc['x'],-1*loc['y'],loc['z'])))
     trans[:,0] = -1*trans[:,0]
 
